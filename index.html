@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>نظام خدمات الهجرة والوكالات – ذكي</title>
+<title>بوابة الهجرة الذكية – Alhijrah Visa & Immigration Services</title>
 
 <!-- Fonts & Icons -->
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
@@ -26,8 +26,9 @@
   a{color:inherit;text-decoration:none}
   .container{max-width:1000px;margin:auto;padding:28px}
   .card{background:rgba(3,23,58,.95);border:1px solid var(--line);border-radius:16px;box-shadow:0 0 20px #daa52055;padding:22px}
-  h1{margin:0 0 14px;color:var(--gold);text-shadow:0 0 8px var(--gold)}
+  h1{margin:0 0 10px;color:var(--gold);text-shadow:0 0 8px var(--gold)}
   h2{margin:0 0 12px;color:var(--gold2)}
+  .tagline{margin:6px 0 16px;line-height:1.85;opacity:.95}
   label{display:block;margin:.35rem 0 .2rem;font-weight:700}
   input,select,textarea{width:100%;background:#0b1e4d;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px 12px;outline-color:var(--gold)}
   input:focus,select:focus,textarea:focus{box-shadow:0 0 12px #ffd700aa}
@@ -92,7 +93,12 @@
 
 <div class="container">
   <div class="card">
-    <h1>نظام خدمات الهجرة والوكالات – ذكي</h1>
+    <h1>بوابة الهجرة الذكية – Alhijrah Visa & Immigration Services</h1>
+    <p class="tagline">
+      مرحبًا بكم في المنصة الرسمية لـ <b>Alhijrah Visa & Immigration Services</b><br>
+      حيث تلتقي الدقة القانونية مع الابتكار الرقمي لتقديم تجربة هجرة متكاملة، موثوقة، واحترافية.
+    </p>
+
     <div class="progress"><div id="bar" class="bar"></div></div>
 
     <!-- Step 1 -->
@@ -178,6 +184,14 @@
         <button id="prev3" class="btn sec">تعديل</button>
         <button id="submit" class="btn">تأكيد الإرسال</button>
       </div>
+
+      <!-- Jotform controls -->
+      <div class="toolbar" style="margin-top:10px; justify-content:flex-start">
+        <a id="btnJotPrefill" class="btn sec" target="_blank" rel="noopener"><i class="fa-solid fa-up-right-from-square"></i> فتح نموذج Jotform (معبأ)</a>
+        <a id="btnJotTable" class="btn sec" target="_blank" rel="noopener"><i class="fa-solid fa-table"></i> Jotform Table</a>
+        <a id="btnJotBoard" class="btn sec" target="_blank" rel="noopener"><i class="fa-solid fa-grip"></i> Jotform Board</a>
+      </div>
+      <div class="hint">زر “Jotform (معبأ)” يفتح الاستمارة على Jotform مع تمرير الاسم/البريد/الهاتف/الخدمة. تم تفعيل الاسم المُركّب (الاسم الأول/الأخير).</div>
     </section>
 
     <!-- Client Card -->
@@ -245,7 +259,9 @@
 </div>
 
 <script>
-/** ====== Integrations (EmailJS + GAS) ====== */
+/** ========= CONFIG =========
+ *  Sheets (Apps Script endpoint) + EmailJS + Jotform (structured name)
+ */
 const INTEGRATIONS = {
   EMAILJS: {
     PUBLIC_KEY: "0Cub6o0xkk9eYTe90",
@@ -253,11 +269,31 @@ const INTEGRATIONS = {
     TEMPLATE_ID: "template_mguzw2l"
   },
   APPS_SCRIPT: {
-    ENDPOINT: "https://script.google.com/macros/s/AKfycbyzk5sB2vWwgLVFsbIOscz_cNaB-VLZlzx1BYNDRUR_B12lZQXA1zf_YrzvFHASMPm3dQ/exec"
+    // Your live Sheets endpoint (writes to tab "Form Responses")
+    ENDPOINT: "https://script.google.com/macros/s/AKfycbwzXuSJNyPmlhHihgFelbPAcs3f0bHZTntXPC0dMOBiPCq3zpKXHaX_ITHco5xLPgcheA/exec"
+  },
+  JOTFORM: {
+    // Your real links
+    FORM_URL: "https://form.jotform.com/AlhijrahServices/Alhijrahsmartportal",
+    BOARD_URL: "https://www.jotform.com/boards/252149440362049",
+    TABLE_URL: "https://www.jotform.com/tables/250817936172058",
+
+    // Structured name mapping (first/last)
+    FIELD_MAP: {
+      "name[first]": true,
+      "name[last]": true,
+      email: "email",
+      phone: "phone",
+      city: "city",
+      service: "service"
+    },
+
+    // Open Jotform in a new tab right after submit (prefilled)
+    AUTO_OPEN_ON_SUBMIT: true
   }
 };
 
-/** ====== بيانات الخدمات + المطلوبات ====== */
+/** ========= Services data ========= */
 const DATA = {
   usa: [
     {n:"التأشيرات السياحية (B1/B2)", req:["جواز ساري","صورة 2×2 (600×600)","كشف حساب 3–6 أشهر","خطة سفر مبدئية"]},
@@ -334,7 +370,7 @@ const DATA = {
 const MAX_FILE = 5*1024*1024;
 const OK_EXT = ['pdf','doc','docx','jpg','jpeg','png'];
 
-/** ====== عناصر ====== */
+/** ====== Elements ====== */
 const yr = document.getElementById('yr');
 const bar = document.getElementById('bar');
 const step1 = document.getElementById('step1');
@@ -380,6 +416,7 @@ const btnCloseThanks = document.getElementById('btnCloseThanks');
 
 let selectedService = null;
 
+/** ====== Helpers ====== */
 function showToast(msg, ms=2200){ toast.textContent=msg; toast.style.display='block'; setTimeout(()=>toast.style.display='none',ms); }
 function setStep(i){
   const steps=[step1,step2,step3];
@@ -391,7 +428,7 @@ function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
 function phoneValid(v){ return /^(\+|00)?\d{8,15}$/.test((v||'').trim()); }
 yr.textContent = new Date().getFullYear();
 
-/** ====== خدمات + بحث ====== */
+/** ====== Services + search ====== */
 function allServicesOfCountry(){
   const c = country.value; if(!c || !DATA[c]) return [];
   return DATA[c];
@@ -431,7 +468,7 @@ function selectService(svc){
   showToast('تم اختيار الخدمة: ' + svc.n);
 }
 
-/** ====== ملفات: تحقق + معاينة ====== */
+/** ====== Files: validate + chips ====== */
 files.addEventListener('change', ()=>{
   fileList.innerHTML = '';
   let total = 0; let ok = true;
@@ -449,7 +486,7 @@ files.addEventListener('change', ()=>{
   if(!ok) showToast('تحذير: نوع/حجم ملف غير مسموح. الحد 5MB والصيغ PDF/DOC/DOCX/JPG/PNG.');
 });
 
-/** ====== تنقل الخطوات ====== */
+/** ====== Step nav ====== */
 next1.addEventListener('click', ()=>{
   if(!country.value){ showToast('اختر التصنيف أولاً.'); return; }
   if(!selectedService){ showToast('اختر خدمة من القائمة.'); return; }
@@ -467,7 +504,7 @@ next2.addEventListener('click', ()=>{
 });
 prev3.addEventListener('click', ()=> setStep(1));
 
-/** ====== مراجعة ====== */
+/** ====== Review ====== */
 function buildReview(){
   const det = esc(details.value).replace(/\n/g,'<br>');
   const fileNames = [...files.files].map(f=>`<li>${esc(f.name)}</li>`).join('');
@@ -481,20 +518,31 @@ function buildReview(){
     <p><b>تفاصيل إضافية:</b></p><div>${det||'لا يوجد'}</div>
     <p><b>المرفقات:</b> ${filesHTML}</p>
   `;
+
+  // prep Jotform links
+  document.getElementById('btnJotPrefill').href = buildJotPrefillURL();
+  document.getElementById('btnJotTable').href   = INTEGRATIONS.JOTFORM.TABLE_URL;
+  document.getElementById('btnJotBoard').href   = INTEGRATIONS.JOTFORM.BOARD_URL;
 }
 
-/** ====== إرسال: شكر + بطاقة + تكامل ====== */
+/** ====== Submit: Thank-you + Card + Integrations ====== */
 submitBtn.addEventListener('click', async ()=>{
   const track = makeTrackId();
 
-  // 1) أظهر شاشة الشكر
+  // Thank-you
   thanksWrap.style.display='block';
 
-  // 2) بِنِ بطاقة العميل فورًا (لتُستخدم في الإرسال)
+  // Build card
   showClientCard(track);
 
-  // 3) إرسال EmailJS + GAS (fire-and-forget)
+  // Fire integrations (EmailJS + GAS)
   fireIntegrations(track).catch(err=>console.warn('Integrations error', err));
+
+  // Auto open Jotform prefilled
+  if (INTEGRATIONS.JOTFORM.AUTO_OPEN_ON_SUBMIT) {
+    const url = buildJotPrefillURL(track);
+    window.open(url, '_blank', 'noopener');
+  }
 });
 
 btnViewCard.onclick = ()=> {
@@ -533,7 +581,31 @@ function showClientCard(track){
   printCard.onclick = ()=> window.print();
 }
 
-/** ====== Integrations ====== */
+/** ====== Jotform Prefill URL (Structured name) ====== */
+function buildJotPrefillURL(track){
+  const F = INTEGRATIONS.JOTFORM.FIELD_MAP;
+  const params = new URLSearchParams();
+
+  // Split the full name for structured fields
+  const full = (fullName.value || "").trim();
+  const parts = full.split(/\s+/);
+  const first = parts.shift() || "";
+  const last  = parts.join(" ") || "";
+
+  if ("name[first]" in F) params.set("name[first]", first);
+  if ("name[last]"  in F) params.set("name[last]",  last);
+
+  if (F.email)   params.set(F.email,   email.value || "");
+  if (F.phone)   params.set(F.phone,   phone.value || "");
+  if (F.city)    params.set(F.city,    city.value  || "");
+  if (F.service) params.set(F.service, (selectedService?.n || ""));
+
+  if (track) params.set("trackId", track); // optional track id
+
+  return `${INTEGRATIONS.JOTFORM.FORM_URL}?${params.toString()}`;
+}
+
+/** ====== Integrations (EmailJS + Sheets) ====== */
 function buildPayload(track){
   return {
     track_id: track,
@@ -561,7 +633,7 @@ async function fireIntegrations(track){
     }
   }catch(e){ console.warn('[EmailJS] fail', e); }
 
-  // GAS (Sheets)
+  // Google Apps Script (Sheets)
   try{
     if(INTEGRATIONS.APPS_SCRIPT.ENDPOINT){
       await fetch(INTEGRATIONS.APPS_SCRIPT.ENDPOINT, {
@@ -574,13 +646,13 @@ async function fireIntegrations(track){
   }catch(e){ console.warn('[GAS] fail', e); }
 }
 
-/** ====== أدوات ====== */
+/** ====== Utils ====== */
 function debounce(fn,ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }}
 
-/** ====== بداية ====== */
+/** ====== Init ====== */
+yr.textContent = new Date().getFullYear();
 setStep(0);
 renderServices();
 </script>
 </body>
 </html>
-# alhijrah-intake
