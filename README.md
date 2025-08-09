@@ -1,1 +1,586 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>نظام خدمات الهجرة والوكالات – ذكي</title>
+
+<!-- Fonts & Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+
+<!-- Lite libs -->
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<!-- EmailJS -->
+<script defer src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+
+<style>
+  :root{
+    --gold:#ffd700; --gold2:#ffe483; --blue:#0b1e4d; --blue2:#04294a; --ink:#f5deb3; --line:#ffffff2a;
+  }
+  *{box-sizing:border-box}
+  body{font-family:'Cairo',sans-serif;margin:0;background:linear-gradient(135deg,var(--blue),var(--blue2));color:var(--ink)}
+  a{color:inherit;text-decoration:none}
+  .container{max-width:1000px;margin:auto;padding:28px}
+  .card{background:rgba(3,23,58,.95);border:1px solid var(--line);border-radius:16px;box-shadow:0 0 20px #daa52055;padding:22px}
+  h1{margin:0 0 14px;color:var(--gold);text-shadow:0 0 8px var(--gold)}
+  h2{margin:0 0 12px;color:var(--gold2)}
+  label{display:block;margin:.35rem 0 .2rem;font-weight:700}
+  input,select,textarea{width:100%;background:#0b1e4d;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px 12px;outline-color:var(--gold)}
+  input:focus,select:focus,textarea:focus{box-shadow:0 0 12px #ffd700aa}
+  button{cursor:pointer;border:none;border-radius:12px;padding:12px 16px;font-weight:800}
+  .btn{background:var(--gold);color:#04294a}
+  .btn.sec{background:#0b1e4d;color:#fff;border:1px solid var(--line)}
+  .row{display:grid;gap:12px}
+  .col-2{grid-template-columns:1fr 1fr}
+  .col-3{grid-template-columns:repeat(3,1fr)}
+  @media(max-width:840px){.col-2,.col-3{grid-template-columns:1fr}}
+  .services{max-height:240px;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:12px;background:#041c3f}
+  .svc{background:#0c2a6b;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:6px 0;display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .svc:hover{background:var(--gold);color:#04294a;box-shadow:0 0 12px #ffd700}
+  .muted{opacity:.85;font-size:.95rem}
+  .hint{color:#ffe59a;font-size:.95rem;margin:.25rem 0 .6rem}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap}
+  .progress{height:8px;background:#ffffff1a;border-radius:8px;overflow:hidden;margin:10px 0 16px}
+  .bar{height:100%;width:0;background:linear-gradient(90deg,var(--gold),var(--gold2));transition:width .25s}
+  .pill{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--line);background:#0b1e4d;border-radius:999px;padding:6px 10px;margin:4px 6px 0 0}
+  .files{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .file{border:1px solid var(--line);border-radius:10px;padding:6px 10px;background:#0b1e4d}
+  .toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);background:#05224a;color:#ffd700;border:1px solid #ffd70066;padding:10px 14px;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.35);z-index:9999;display:none}
+
+  /* Social (left vertical) */
+  .social-left{position:fixed;left:12px;top:50%;transform:translateY(-50%);z-index:1000}
+  .social-left .stack{display:flex;flex-direction:column;gap:10px}
+  .social-left a{width:44px;height:44px;display:grid;place-items:center;border-radius:12px;background:rgba(255,255,255,.12);border:1px solid var(--line);color:#fff;transition:transform .15s, box-shadow .25s}
+  .social-left a:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(0,0,0,.35)}
+
+  /* Client Card */
+  #clientCard{display:none;margin-top:16px}
+  .avatar{width:88px;height:88px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);background:#fff}
+
+  /* Footer */
+  footer{margin-top:28px;background:rgba(3,23,58,.9);border-top:1px solid #ffffff2a}
+  .footer-inner{max-width:1000px;margin:auto;padding:16px 22px}
+  .footer-grid{display:grid;gap:12px;grid-template-columns:2fr 1fr 1fr}
+  .footer-title{color:var(--gold);font-weight:800;margin-bottom:6px}
+  .contact a{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:10px;border:1px solid #ffffff1a;background:#0b1e4d}
+  .copy{margin-top:10px;opacity:.85;font-size:.95rem}
+  @media(max-width:900px){.footer-grid{grid-template-columns:1fr}}
+
+  /* Thank You overlay */
+  #thanksWrap{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;z-index:1200}
+  #thanksCard{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);max-width:560px;width:90%;text-align:center}
+  .pop{animation:pop .35s ease}
+  @keyframes pop{from{transform:translate(-50%,-50%) scale(.96);opacity:0}to{transform:translate(-50%,-50%) scale(1);opacity:1}}
+</style>
+</head>
+<body>
+
+<!-- Social icons left -->
+<div class="social-left" aria-label="روابط التواصل">
+  <div class="stack card" style="padding:8px">
+    <a href="https://wa.me/13139194272" target="_blank" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+    <a href="mailto:visa@alhijrahservices.com" title="Email"><i class="fa-solid fa-envelope"></i></a>
+    <a href="https://alhijrahvisa.com" target="_blank" title="Website"><i class="fa-solid fa-globe"></i></a>
+    <a href="https://www.facebook.com/share/19gTVpmjVo/" target="_blank" title="Facebook"><i class="fab fa-facebook-f"></i></a>
+    <a href="https://www.instagram.com/alhijrahservices/" target="_blank" title="Instagram"><i class="fab fa-instagram"></i></a>
+  </div>
+</div>
+
+<div class="container">
+  <div class="card">
+    <h1>نظام خدمات الهجرة والوكالات – ذكي</h1>
+    <div class="progress"><div id="bar" class="bar"></div></div>
+
+    <!-- Step 1 -->
+    <section id="step1">
+      <div class="row col-3">
+        <div class="colspan">
+          <label for="country">الدولة/التصنيف</label>
+          <select id="country" required>
+            <option value="" selected disabled>— اختر —</option>
+            <option value="usa">أمريكا</option>
+            <option value="canada">كندا</option>
+            <option value="newzealand">نيوزيلندا</option>
+            <option value="australia">أستراليا</option>
+            <option value="yemen">اليمن (جوازات/إقامات)</option>
+            <option value="translation">الترجمة</option>
+            <option value="notarization">التوثيق</option>
+            <option value="powerofattorney">التوكيل والتعميد</option>
+            <option value="hajj">الحج والعمرة</option>
+            <option value="flights">حجوزات الطيران</option>
+          </select>
+          <div class="hint">اختر التصنيف ثم ابحث أو اختر من القائمة.</div>
+        </div>
+        <div class="colspan">
+          <label for="svcSearch">بحث عن خدمة</label>
+          <input id="svcSearch" placeholder="اكتب مثلاً: سياحية، ترشيح إقليمي، توثيق…" />
+        </div>
+        <div class="toolbar" style="align-self:end">
+          <button id="next1" class="btn">التالي →</button>
+        </div>
+      </div>
+
+      <div class="services" id="svcBox" aria-live="polite" aria-atomic="true" style="margin-top:10px">
+        <div class="muted">سيتم عرض الخدمات هنا بعد اختيار التصنيف أو كتابة كلمة بحث…</div>
+        <div id="svcList"></div>
+      </div>
+    </section>
+
+    <!-- Step 2 -->
+    <section id="step2" style="display:none">
+      <h2>نموذج تقديم الطلب</h2>
+      <div class="pill"><b>الخدمة:</b>&nbsp;<span id="svcNamePill">—</span></div>
+      <div id="reqDocs" class="hint"></div>
+
+      <div class="row col-2" style="margin-top:8px">
+        <div>
+          <label for="fullName">الاسم الكامل *</label>
+          <input id="fullName" required placeholder="الاسم كما في الجواز" />
+        </div>
+        <div>
+          <label for="email">البريد الإلكتروني *</label>
+          <input id="email" type="email" required placeholder="example@mail.com" />
+        </div>
+        <div>
+          <label for="phone">رقم الهاتف *</label>
+          <input id="phone" required placeholder="+1313XXXXXXXX أو 00966XXXXXXX" />
+          <div class="hint">يُسمح بصيغة + أو 00، 8–15 رقم.</div>
+        </div>
+        <div>
+          <label for="city">المدينة (اختياري)</label>
+          <input id="city" placeholder="مثلاً: الرياض، ديربورن…" />
+        </div>
+      </div>
+
+      <label for="details">تفاصيل إضافية (اختياري)</label>
+      <textarea id="details" rows="4" placeholder="اكتب أي معلومات تساعدنا (تواريخ، أرقام إيصالات، ملاحظات)…"></textarea>
+
+      <label for="files">إرفاق مستندات (اختياري)</label>
+      <input id="files" type="file" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+      <div class="muted" id="fileMeta">لم يتم إرفاق ملفات بعد.</div>
+      <div class="files" id="fileList"></div>
+
+      <div class="toolbar" style="margin-top:10px">
+        <button id="prev2" class="btn sec">رجوع</button>
+        <button id="next2" class="btn">مراجعة →</button>
+      </div>
+    </section>
+
+    <!-- Step 3 -->
+    <section id="step3" style="display:none">
+      <h2>مراجعة الطلب</h2>
+      <div id="reviewBox" class="card" style="background:#041c3f"></div>
+      <div class="toolbar" style="margin-top:10px">
+        <button id="prev3" class="btn sec">تعديل</button>
+        <button id="submit" class="btn">تأكيد الإرسال</button>
+      </div>
+    </section>
+
+    <!-- Client Card -->
+    <section id="clientCard" class="card">
+      <h2 style="margin-top:0">بطاقة العميل (VIP)</h2>
+      <div class="row col-2" style="align-items:center">
+        <div class="toolbar" style="gap:12px;align-items:center">
+          <img class="avatar" id="avatar" src="https://via.placeholder.com/88x88.png?text=AL" alt="Avatar" />
+          <div>
+            <div class="pill"><b>TrackID:</b>&nbsp;<span id="trackId">—</span></div>
+            <div class="pill"><b>الخدمة:</b>&nbsp;<span id="svcOut">—</span></div>
+          </div>
+        </div>
+        <div id="qrcode" style="justify-self:end"></div>
+      </div>
+      <div id="cardData" style="margin-top:8px"></div>
+      <div class="toolbar" style="margin-top:12px">
+        <button id="dlPDF" class="btn"><i class="fa-solid fa-file-arrow-down"></i> تنزيل PDF</button>
+        <a id="waShare" class="btn sec" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i> مشاركة واتساب</a>
+        <button id="printCard" class="btn sec"><i class="fa-solid fa-print"></i> طباعة</button>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<!-- Footer -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-title">Alhijrah Visa & Immigration Services</div>
+        <div class="muted">نُعيد تعريف تجربة الهجرة بالدقة والاحترافية والشفافية.</div>
+      </div>
+      <div class="contact">
+        <div class="footer-title">تواصل</div>
+        <a href="https://wa.me/13139194272" target="_blank"><i class="fab fa-whatsapp"></i><span> WhatsApp</span></a>
+        <a href="mailto:visa@alhijrahservices.com"><i class="fa-solid fa-envelope"></i><span> visa@alhijrahservices.com</span></a>
+        <a href="tel:+13139194272"><i class="fa-solid fa-phone"></i><span> +1 (313) 919-4272</span></a>
+      </div>
+      <div class="contact">
+        <div class="footer-title">روابط</div>
+        <a href="https://alhijrahvisa.com" target="_blank"><i class="fa-solid fa-globe"></i><span> الموقع الرسمي</span></a>
+        <a href="https://www.facebook.com/share/19gTVpmjVo/" target="_blank"><i class="fab fa-facebook-f"></i><span> Facebook</span></a>
+        <a href="https://www.instagram.com/alhijrahservices/" target="_blank"><i class="fab fa-instagram"></i><span> Instagram</span></a>
+      </div>
+    </div>
+    <div class="copy">© <span id="yr"></span> Alhijrah Services — جميع الحقوق محفوظة.</div>
+  </div>
+</footer>
+
+<!-- Toast -->
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<!-- Thank You Overlay -->
+<div id="thanksWrap">
+  <div id="thanksCard" class="card pop">
+    <h2>🎉 شكرًا لك!</h2>
+    <p style="margin:.5rem 0 1rem">تم استلام طلبك بنجاح. سنراجع بياناتك ونتواصل معك قريبًا.</p>
+    <div class="toolbar" style="justify-content:center">
+      <button id="btnViewCard" class="btn">عرض بطاقة العميل</button>
+      <button id="btnCloseThanks" class="btn sec">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/** ====== Integrations (EmailJS + GAS) ====== */
+const INTEGRATIONS = {
+  EMAILJS: {
+    PUBLIC_KEY: "0Cub6o0xkk9eYTe90",
+    SERVICE_ID: "service_flhs3e5",
+    TEMPLATE_ID: "template_mguzw2l"
+  },
+  APPS_SCRIPT: {
+    ENDPOINT: "https://script.google.com/macros/s/AKfycbyzk5sB2vWwgLVFsbIOscz_cNaB-VLZlzx1BYNDRUR_B12lZQXA1zf_YrzvFHASMPm3dQ/exec"
+  }
+};
+
+/** ====== بيانات الخدمات + المطلوبات ====== */
+const DATA = {
+  usa: [
+    {n:"التأشيرات السياحية (B1/B2)", req:["جواز ساري","صورة 2×2 (600×600)","كشف حساب 3–6 أشهر","خطة سفر مبدئية"]},
+    {n:"التأشيرات الدراسية (F-1)", req:["قبول جامعي/معهد + I-20","إثبات مالي","جواز ساري","صورة 2×2"]},
+    {n:"الهجرة العائلية", req:["شهادة زواج/ميلاد حسب العلاقة","إثبات إقامة/دخل للمكفِّل","جوازات"]},
+    {n:"الهجرة المهنية", req:["سيرة ذاتية","شهادات وخبرات","نتائج اختبارات إن وُجدت"]},
+    {n:"اللجوء والحماية", req:["رواية واقعية موثقة","أدلة ومستندات داعمة (إن وُجدت)"]}
+  ],
+  canada: [
+    {n:"برنامج العمال المهرة (Express Entry)", req:["IELTS/CELPIP","ECA","سيرة ذاتية","جواز"]},
+    {n:"الهجرة العائلية", req:["إثبات علاقة","إثبات دعم مالي","جوازات"]},
+    {n:"برامج الترشيح الإقليمي (PNP)", req:["ملف Express Entry أو مستقل","خبرة/تعليم مناسب","جواز"]},
+    {n:"برنامج الطلاب الدوليين", req:["قبول دراسي","إثبات مالي","جواز","صور"]},
+    {n:"تجديد التأشيرة", req:["جواز/إقامة سارية","أسباب التجديد","صور حديثة"]}
+  ],
+  newzealand: [
+    {n:"عمالة مهرة", req:["سيرة ذاتية","شهادات","إثبات خبرة","جواز"]},
+    {n:"عائلية", req:["إثبات علاقة","جوازات","صور"]},
+    {n:"سياحية", req:["خطة سفر","إثبات مالي","جواز"]},
+    {n:"دراسية", req:["قبول","إثبات مالي","جواز"]},
+    {n:"استثمار", req:["خطة استثمار","إثبات أصول","جواز"]}
+  ],
+  australia: [
+    {n:"مهارية", req:["EOI","IELTS/PTE","سيرة ذاتية","شهادات"]},
+    {n:"عائلية", req:["إثبات علاقة","دعم مالي","جواز"]},
+    {n:"سياحية", req:["خطة سفر","إثبات مالي","جواز"]},
+    {n:"عمل مؤقت", req:["عرض عمل","سجل خبرة","جواز"]},
+    {n:"لجوء", req:["مذكرات حالة","أدلة داعمة","جواز (إن وُجد)"]}
+  ],
+  yemen: [
+    {n:"إصدار جواز", req:["استمارة","صور شخصية","رسوم"]},
+    {n:"تجديد جواز", req:["الجواز القديم","صور","رسوم"]},
+    {n:"إقامات", req:["نموذج","إثبات سكن","صور"]},
+    {n:"تسجيل ولادة", req:["شهادة مستشفى","هويات الوالدين","صور"]},
+    {n:"تسجيل وفاة", req:["شهادة وفاة","هوية قريب","إثبات صلة"]}
+  ],
+  translation: [
+    {n:"الترجمة القانونية", req:["المستند الأصلي الواضح","بيانات التواصل"]},
+    {n:"ترجمة شهادات", req:["الشهادة بجودة عالية","أي متطلبات تصديق"]},
+    {n:"ترجمة معتمدة", req:["المستند + الغرض من الترجمة"]},
+    {n:"ترجمة فورية", req:["المجال والموعد"]},
+    {n:"ترجمة مستندات رسمية", req:["المستند","موعد التسليم"]}
+  ],
+  notarization: [
+    {n:"توثيق العقود", req:["مسودة العقد","هويات الأطراف"]},
+    {n:"التصديق على التوقيع", req:["هوية سارية","حضور صاحب العلاقة"]},
+    {n:"توكيد صحة المستندات", req:["أصل/صورة طبق الأصل","بيانات"]},
+    {n:"تسجيل الوكالات", req:["نص الوكالة","بيانات الموكل/الوكيل"]},
+    {n:"توثيق معاملات قانونية", req:["أصل المعاملة","هويات"]}
+  ],
+  powerofattorney: [
+    {n:"توكيل عام", req:["نص التوكيل","هويات"]},
+    {n:"توكيل خاص", req:["نص محدد","بيانات الأطراف"]},
+    {n:"تعميد قانوني", req:["نموذج التعميد","هويات"]},
+    {n:"تسجيل التوكيلات", req:["النص النهائي","بيانات الأطراف"]},
+    {n:"صياغة التوكيلات", req:["الغرض","الحدود والصلاحيات"]}
+  ],
+  hajj: [
+    {n:"حج", req:["جواز","صور","حزمة مختارة"]},
+    {n:"عمرة", req:["جواز","صور","حجز فندقي"]},
+    {n:"جولات دينية", req:["الوجهات","المواعيد"]},
+    {n:"إقامة", req:["تاريخ الوصول","عدد النزلاء"]},
+    {n:"نقل", req:["عدد الأشخاص","المدن"]}
+  ],
+  flights: [
+    {n:"تذاكر داخلية", req:["تواريخ","مدن"]},
+    {n:"تذاكر دولية", req:["جواز","تواريخ","مدن"]},
+    {n:"تذاكر عائلية", req:["عدد الركاب","أعمار"]},
+    {n:"طيران عارض", req:["تفاصيل الرحلة","الأعداد"]},
+    {n:"تعديل تذكرة", req:["رقم الحجز","التاريخ الجديد"]}
+  ]
+};
+
+const MAX_FILE = 5*1024*1024;
+const OK_EXT = ['pdf','doc','docx','jpg','jpeg','png'];
+
+/** ====== عناصر ====== */
+const yr = document.getElementById('yr');
+const bar = document.getElementById('bar');
+const step1 = document.getElementById('step1');
+const step2 = document.getElementById('step2');
+const step3 = document.getElementById('step3');
+const country = document.getElementById('country');
+const svcSearch = document.getElementById('svcSearch');
+const svcBox = document.getElementById('svcBox');
+const svcList = document.getElementById('svcList');
+const next1 = document.getElementById('next1');
+
+const svcNamePill = document.getElementById('svcNamePill');
+const reqDocs = document.getElementById('reqDocs');
+const fullName = document.getElementById('fullName');
+const email = document.getElementById('email');
+const phone = document.getElementById('phone');
+const city = document.getElementById('city');
+const details = document.getElementById('details');
+const files = document.getElementById('files');
+const fileList = document.getElementById('fileList');
+const fileMeta = document.getElementById('fileMeta');
+const prev2 = document.getElementById('prev2');
+const next2 = document.getElementById('next2');
+
+const reviewBox = document.getElementById('reviewBox');
+const prev3 = document.getElementById('prev3');
+const submitBtn = document.getElementById('submit');
+
+const clientCard = document.getElementById('clientCard');
+const trackIdEl = document.getElementById('trackId');
+const svcOut = document.getElementById('svcOut');
+const qrcodeEl = document.getElementById('qrcode');
+const cardData = document.getElementById('cardData');
+const dlPDF = document.getElementById('dlPDF');
+const waShare = document.getElementById('waShare');
+const printCard = document.getElementById('printCard');
+
+const toast = document.getElementById('toast');
+
+const thanksWrap = document.getElementById('thanksWrap');
+const btnViewCard = document.getElementById('btnViewCard');
+const btnCloseThanks = document.getElementById('btnCloseThanks');
+
+let selectedService = null;
+
+function showToast(msg, ms=2200){ toast.textContent=msg; toast.style.display='block'; setTimeout(()=>toast.style.display='none',ms); }
+function setStep(i){
+  const steps=[step1,step2,step3];
+  steps.forEach((s,idx)=> s.style.display = idx===i ? 'block' : 'none');
+  bar.style.width = (i/(steps.length-1))*100 + '%';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function phoneValid(v){ return /^(\+|00)?\d{8,15}$/.test((v||'').trim()); }
+yr.textContent = new Date().getFullYear();
+
+/** ====== خدمات + بحث ====== */
+function allServicesOfCountry(){
+  const c = country.value; if(!c || !DATA[c]) return [];
+  return DATA[c];
+}
+function renderServices(){
+  const list = allServicesOfCountry();
+  const q = (svcSearch.value||'').trim().toLowerCase();
+  let filt = list;
+  if(q){
+    filt = list.filter(s => s.n.toLowerCase().includes(q) || (s.req||[]).some(r=>r.toLowerCase().includes(q)));
+  }
+  svcList.innerHTML = '';
+  if(!country.value){ svcBox.querySelector('.muted').textContent='اختر التصنيف أولاً…'; return; }
+  if(filt.length===0){
+    svcBox.querySelector('.muted').textContent='لا نتائج مطابقة للبحث. جرّب كلمة أخرى.';
+    return;
+  }
+  svcBox.querySelector('.muted').textContent = '';
+  filt.forEach(s=>{
+    const row = document.createElement('div'); row.className='svc';
+    const span = document.createElement('span'); span.textContent = s.n;
+    const btn = document.createElement('button'); btn.className='btn sec'; btn.textContent='اختيار';
+    btn.onclick = ()=> selectService(s);
+    row.append(span, btn);
+    svcList.appendChild(row);
+  });
+}
+country.addEventListener('change', renderServices);
+svcSearch.addEventListener('input', debounce(renderServices, 200));
+
+function selectService(svc){
+  selectedService = svc;
+  svcNamePill.textContent = svc.n;
+  reqDocs.innerHTML = `<b>المطلوبات المبدئية:</b> ${svc.req.map(r=>`<span class="pill">${esc(r)}</span>`).join(' ')}`;
+  setStep(1); // إلى النموذج
+  step1.style.display='none'; step2.style.display='block';
+  showToast('تم اختيار الخدمة: ' + svc.n);
+}
+
+/** ====== ملفات: تحقق + معاينة ====== */
+files.addEventListener('change', ()=>{
+  fileList.innerHTML = '';
+  let total = 0; let ok = true;
+  [...files.files].forEach(f=>{
+    const ext = (f.name.split('.').pop()||'').toLowerCase();
+    total += f.size;
+    if(!OK_EXT.includes(ext) || f.size>MAX_FILE) ok=false;
+    const chip = document.createElement('div'); chip.className='file';
+    chip.textContent = `${f.name} — ${(f.size/1024).toFixed(0)} KB`;
+    fileList.appendChild(chip);
+  });
+  fileMeta.textContent = files.files.length
+    ? `عدد الملفات: ${files.files.length} — الحجم الكلي ~ ${(total/1024/1024).toFixed(2)} MB`
+    : 'لم يتم إرفاق ملفات بعد.';
+  if(!ok) showToast('تحذير: نوع/حجم ملف غير مسموح. الحد 5MB والصيغ PDF/DOC/DOCX/JPG/PNG.');
+});
+
+/** ====== تنقل الخطوات ====== */
+next1.addEventListener('click', ()=>{
+  if(!country.value){ showToast('اختر التصنيف أولاً.'); return; }
+  if(!selectedService){ showToast('اختر خدمة من القائمة.'); return; }
+  setStep(1);
+});
+prev2.addEventListener('click', ()=> setStep(0));
+next2.addEventListener('click', ()=>{
+  if(!fullName.value.trim() || !email.validity.valid || !phoneValid(phone.value)){
+    showToast('تحقق من الاسم والبريد ورقم الهاتف.');
+    if(!phoneValid(phone.value)) phone.focus();
+    return;
+  }
+  buildReview();
+  setStep(2);
+});
+prev3.addEventListener('click', ()=> setStep(1));
+
+/** ====== مراجعة ====== */
+function buildReview(){
+  const det = esc(details.value).replace(/\n/g,'<br>');
+  const fileNames = [...files.files].map(f=>`<li>${esc(f.name)}</li>`).join('');
+  const filesHTML = files.files.length ? `<ul>${fileNames}</ul>` : 'لا يوجد';
+  reviewBox.innerHTML = `
+    <p><b>الخدمة:</b> ${esc(selectedService?.n||'—')}</p>
+    <p><b>الاسم:</b> ${esc(fullName.value)}</p>
+    <p><b>البريد:</b> ${esc(email.value)}</p>
+    <p><b>الهاتف:</b> ${esc(phone.value)}</p>
+    <p><b>المدينة:</b> ${esc(city.value||'-')}</p>
+    <p><b>تفاصيل إضافية:</b></p><div>${det||'لا يوجد'}</div>
+    <p><b>المرفقات:</b> ${filesHTML}</p>
+  `;
+}
+
+/** ====== إرسال: شكر + بطاقة + تكامل ====== */
+submitBtn.addEventListener('click', async ()=>{
+  const track = makeTrackId();
+
+  // 1) أظهر شاشة الشكر
+  thanksWrap.style.display='block';
+
+  // 2) بِنِ بطاقة العميل فورًا (لتُستخدم في الإرسال)
+  showClientCard(track);
+
+  // 3) إرسال EmailJS + GAS (fire-and-forget)
+  fireIntegrations(track).catch(err=>console.warn('Integrations error', err));
+});
+
+btnViewCard.onclick = ()=> {
+  thanksWrap.style.display='none';
+  clientCard.scrollIntoView({behavior:'smooth', block:'center'});
+};
+btnCloseThanks.onclick = ()=> { thanksWrap.style.display='none'; };
+
+function makeTrackId(){
+  const d=new Date(), y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0');
+  return `ALH-${y}${m}${dd}-${Math.floor(Math.random()*9000+1000)}`;
+}
+function showClientCard(track){
+  trackIdEl.textContent = track;
+  svcOut.textContent = selectedService?.n||'—';
+  const qrText = location.origin + location.pathname + '?track=' + encodeURIComponent(track);
+  qrcodeEl.innerHTML = ''; new QRCode(qrcodeEl, {text:qrText, width:110, height:110, colorDark:"#000", colorLight:"#fff"});
+  cardData.innerHTML = `
+    <div class="row col-2">
+      <div>
+        <p><b>الاسم:</b> ${esc(fullName.value)}</p>
+        <p><b>البريد:</b> ${esc(email.value)}</p>
+        <p><b>الهاتف:</b> ${esc(phone.value)}</p>
+      </div>
+      <div>
+        <p><b>المدينة:</b> ${esc(city.value||'-')}</p>
+        <p><b>التاريخ:</b> ${new Date().toLocaleDateString('ar')}</p>
+        <p><b>الوقت:</b> ${new Date().toLocaleTimeString('ar')}</p>
+      </div>
+    </div>`;
+  clientCard.style.display = 'block';
+
+  waShare.href = `https://wa.me/13139194272?text=${encodeURIComponent('TrackID '+track+' — '+(fullName.value||'')+' — خدمة: '+(selectedService?.n||''))}`;
+
+  dlPDF.onclick = ()=> html2pdf().from(clientCard).set({margin:.4, filename:`ClientCard_${track}.pdf`, html2canvas:{scale:2}, jsPDF:{unit:'in',format:'a4'}}).save();
+  printCard.onclick = ()=> window.print();
+}
+
+/** ====== Integrations ====== */
+function buildPayload(track){
+  return {
+    track_id: track,
+    track_url: location.href,
+    country: country.value,
+    service: selectedService?.n || '',
+    fullName: fullName.value,
+    email: email.value,
+    phone: phone.value,
+    city: city.value,
+    details: details.value,
+    files_count: (files.files||[]).length
+  };
+}
+
+async function fireIntegrations(track){
+  const payload = buildPayload(track);
+
+  // EmailJS
+  try{
+    if(window.emailjs && INTEGRATIONS.EMAILJS.PUBLIC_KEY){
+      emailjs.init(INTEGRATIONS.EMAILJS.PUBLIC_KEY);
+      await emailjs.send(INTEGRATIONS.EMAILJS.SERVICE_ID, INTEGRATIONS.EMAILJS.TEMPLATE_ID, payload);
+      console.log('[EmailJS] sent');
+    }
+  }catch(e){ console.warn('[EmailJS] fail', e); }
+
+  // GAS (Sheets)
+  try{
+    if(INTEGRATIONS.APPS_SCRIPT.ENDPOINT){
+      await fetch(INTEGRATIONS.APPS_SCRIPT.ENDPOINT, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      });
+      console.log('[GAS] posted');
+    }
+  }catch(e){ console.warn('[GAS] fail', e); }
+}
+
+/** ====== أدوات ====== */
+function debounce(fn,ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }}
+
+/** ====== بداية ====== */
+setStep(0);
+renderServices();
+</script>
+</body>
+</html>
 # alhijrah-intake
